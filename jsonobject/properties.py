@@ -11,14 +11,15 @@ from .base_properties import (
     JsonProperty,
 )
 from .containers import JsonArray, JsonDict, JsonSet
+import six
 
 
 class StringProperty(AssertTypeProperty):
-    _type = (unicode, str)
+    _type = (six.text_type, str)
 
     def selective_coerce(self, obj):
         if isinstance(obj, str):
-            obj = unicode(obj)
+            obj = six.text_type(obj)
         return obj
 
 
@@ -27,14 +28,14 @@ class BooleanProperty(AssertTypeProperty):
 
 
 class IntegerProperty(AssertTypeProperty):
-    _type = (int, long)
+    _type = six.integer_types
 
 
 class FloatProperty(AssertTypeProperty):
     _type = float
 
     def selective_coerce(self, obj):
-        if isinstance(obj, (int, long)):
+        if isinstance(obj, six.integer_types):
             obj = float(obj)
         return obj
 
@@ -45,13 +46,13 @@ class DecimalProperty(JsonProperty):
         return decimal.Decimal(obj)
 
     def unwrap(self, obj):
-        if isinstance(obj, (int, long)):
+        if isinstance(obj, six.integer_types):
             obj = decimal.Decimal(obj)
         elif isinstance(obj, float):
             # python 2.6 doesn't allow a float to Decimal
-            obj = decimal.Decimal(unicode(obj))
+            obj = decimal.Decimal(six.text_type(obj))
         assert isinstance(obj, decimal.Decimal)
-        return obj, unicode(obj)
+        return obj, six.text_type(obj)
 
 
 class DateProperty(AbstractDateProperty):

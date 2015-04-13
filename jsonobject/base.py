@@ -8,6 +8,7 @@ from .exceptions import (
 )
 from .base_properties import JsonProperty, DefaultProperty
 from .utils import check_type
+import six
 
 
 JsonObjectClassSettings = namedtuple('JsonObjectClassSettings', ['type_config'])
@@ -99,7 +100,7 @@ class TypeConfig(object):
 
     def _get_string_conversions(self):
         result = []
-        for pattern, conversion in self._string_conversions.items():
+        for pattern, conversion in list(self._string_conversions.items()):
             conversion = (
                 conversion if conversion not in self._properties
                 else self._properties[conversion](type_config=self).to_python
@@ -119,13 +120,13 @@ class JsonObjectMeta(type):
         cls = super(JsonObjectMeta, mcs).__new__(mcs, name, bases, dct)
 
         cls.__configure(**{key: value
-                           for key, value in cls.Meta.__dict__.items()
+                           for key, value in list(cls.Meta.__dict__.items())
                            if key in META_ATTRS})
         cls_settings = get_settings(cls)
 
         properties = {}
         properties_by_name = {}
-        for key, value in dct.items():
+        for key, value in list(dct.items()):
             if isinstance(value, JsonProperty):
                 properties[key] = value
             elif key.startswith('_'):
@@ -135,7 +136,7 @@ class JsonObjectMeta(type):
                 properties[key] = dct[key] = property_
                 setattr(cls, key, property_)
 
-        for key, property_ in properties.items():
+        for key, property_ in list(properties.items()):
             property_.init_property(default_name=key,
                                     type_config=cls_settings.type_config)
             assert property_.name is not None, property_
@@ -146,7 +147,7 @@ class JsonObjectMeta(type):
 
         for base in bases:
             if getattr(base, '_properties_by_attr', None):
-                for key, value in base._properties_by_attr.items():
+                for key, value in list(base._properties_by_attr.items()):
                     if key not in properties:
                         properties[key] = value
                         properties_by_name[value.name] = value
@@ -178,9 +179,7 @@ class _JsonObjectPrivateInstanceVariables(object):
         self.dynamic_properties = dynamic_properties or {}
 
 
-class JsonObjectBase(object):
-
-    __metaclass__ = JsonObjectMeta
+class JsonObjectBase(six.with_metaclass(JsonObjectMeta, object)):
 
     _allow_dynamic_properties = True
     _validate_required_lazily = False
@@ -197,7 +196,7 @@ class JsonObjectBase(object):
                                'JsonObject must wrap a dict or None')
         self._wrapped = {}
 
-        for key, value in self._obj.items():
+        for key, value in list(self._obj.items()):
             try:
                 self.set_raw_value(key, value)
             except AttributeError:
@@ -210,7 +209,7 @@ class JsonObjectBase(object):
                     )
                 )
 
-        for attr, value in kwargs.items():
+        for attr, value in list(kwargs.items()):
             try:
                 setattr(self, attr, value)
             except AttributeError:
@@ -223,7 +222,7 @@ class JsonObjectBase(object):
                     )
                 )
 
-        for key, value in self._properties_by_key.items():
+        for key, value in list(self._properties_by_key.items()):
             if key not in self._obj:
                 try:
                     d = value.default()
@@ -252,7 +251,7 @@ class JsonObjectBase(object):
         return self
 
     def validate(self, required=True):
-        for key, value in self._wrapped.items():
+        for key, value in list(self._wrapped.items()):
             self.__get_property(key).validate(value, required=required)
 
     def to_json(self):
@@ -343,7 +342,7 @@ class JsonObjectBase(object):
 
     def __repr__(self):
         name = self.__class__.__name__
-        predefined_properties = self._properties_by_attr.keys()
+        predefined_properties = list(self._properties_by_attr.keys())
         predefined_property_keys = set(self._properties_by_attr[p].name
                                        for p in predefined_properties)
         dynamic_properties = (set(self._wrapped.keys())
@@ -370,13 +369,13 @@ class _LimitedDictInterfaceMixin(object):
     _wrapped = None
 
     def keys(self):
-        return self._wrapped.keys()
+        return list(self._wrapped.keys())
 
     def items(self):
-        return self._wrapped.items()
+        return list(self._wrapped.items())
 
     def iteritems(self):
-        return self._wrapped.iteritems()
+        return six.iteritems(self._wrapped)
 
     def __contains__(self, item):
         return item in self._wrapped

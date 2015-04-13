@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from decimal import Decimal
 import datetime
 from jsonobject.exceptions import BadValueError
@@ -23,7 +24,7 @@ class StringConversionsTest(unittest2.TestCase):
         'dict': {
             'decimal': Decimal('1.4'),
         },
-        'list': [Decimal('1.0'), datetime.date(2000, 01, 01)],
+        'list': [Decimal('1.0'), datetime.date(2000, 0o1, 0o1)],
         'datetime': datetime.datetime(2014, 1, 3, 1, 2, 3)
     }
 
@@ -31,7 +32,7 @@ class StringConversionsTest(unittest2.TestCase):
         class Foo(JsonObject):
             pass
         foo = Foo.wrap(self.EXAMPLES)
-        for key, value in self.EXAMPLES_CONVERTED.items():
+        for key, value in list(self.EXAMPLES_CONVERTED.items()):
             self.assertEqual(getattr(foo, key), value)
 
     def test_no_conversions(self):
@@ -40,7 +41,7 @@ class StringConversionsTest(unittest2.TestCase):
                 string_conversions = ()
 
         foo = Foo.wrap(self.EXAMPLES)
-        for key, value in self.EXAMPLES.items():
+        for key, value in list(self.EXAMPLES.items()):
             self.assertEqual(getattr(foo, key), value)
 
     def test_nested_1(self):
@@ -104,7 +105,7 @@ class StringConversionsTest(unittest2.TestCase):
         examples_converted['datetime'] = datetime.datetime(
             2014, 1, 3, 1, 2, 3, 12345)
         foo = Foo.wrap(examples)
-        for key, value in examples_converted.items():
+        for key, value in list(examples_converted.items()):
             self.assertEqual(getattr(foo, key), value)
 
 

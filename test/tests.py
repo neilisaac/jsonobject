@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from copy import deepcopy
 import unittest2
 from jsonobject import *
@@ -6,6 +7,8 @@ from jsonobject.exceptions import (
     DeleteNotAllowed,
     WrappingAttributeError,
 )
+from six.moves import map
+import six
 
 
 class Features(JsonObject):
@@ -35,7 +38,7 @@ class Person(Document):
     last_name = StringProperty()
     features = ObjectProperty(Features)
     favorite_numbers = ListProperty(int)
-    tags = ListProperty(unicode)
+    tags = ListProperty(six.text_type)
 
     @property
     def full_name(self):
@@ -85,7 +88,7 @@ class JsonObjectTestCase(unittest2.TestCase):
         data = self._danny_data()
         danny = FamilyMember.wrap(data)
         self.assertEqual(danny.doc_type, 'FamilyMember')
-        self.assertIsInstance(danny.doc_type, unicode)
+        self.assertIsInstance(danny.doc_type, six.text_type)
         self.assertEqual(danny.first_name, 'Danny')
         self.assertEqual(danny.last_name, 'Roberts')
         self.assertEqual(danny.brothers[0].full_name, 'Alex Roberts')
@@ -108,7 +111,7 @@ class JsonObjectTestCase(unittest2.TestCase):
         with self.assertRaises(AssertionError):
             danny.brothers = brothers
 
-        brothers = map(FamilyMember.wrap, brothers)
+        brothers = list(map(FamilyMember.wrap, brothers))
         danny.brothers = brothers
 
         self.assertEqual(danny.brothers, brothers)
@@ -138,7 +141,7 @@ class JsonObjectTestCase(unittest2.TestCase):
             with self.assertRaises(error_type) as cm:
                 Person.wrap({'full_name': 'Danny Roberts'})
             self.assertEqual(
-                unicode(cm.exception),
+                six.text_type(cm.exception),
                 "can't set attribute corresponding to "
                 "'full_name' on a <class 'test.tests.Person'> "
                 "while wrapping {'full_name': 'Danny Roberts'}"
@@ -202,7 +205,7 @@ class JsonObjectTestCase(unittest2.TestCase):
         self.assertEqual(p.to_json(), {'a': None, 'b': json_end['b']})
         p['a'] = [1, 2, 3]
         self.assertEqual(p.to_json(), json_end)
-        self.assertEqual(p.keys(), p.to_json().keys())
+        self.assertEqual(list(p.keys()), list(p.to_json().keys()))
 
     def test_competing_names(self):
         with self.assertRaises(AssertionError):
@@ -369,7 +372,7 @@ class JsonObjectTestCase(unittest2.TestCase):
             l2 = ListProperty(IntegerProperty)
         d = Dummy()
         longint = 2 ** 63
-        self.assertIsInstance(longint, long)
+        self.assertIsInstance(longint, six.integer_types)
         d.i = longint
         self.assertEqual(d.i, longint)
         d.l = [longint]
@@ -532,15 +535,15 @@ class PropertyTestCase(unittest2.TestCase):
         self.assertEqual(foo.to_json()['decimal'], '2.0')
 
         foo.decimal = 3
-        self.assertEqual(foo.decimal, decimal.Decimal(3L))
+        self.assertEqual(foo.decimal, decimal.Decimal(3))
         self.assertEqual(foo.to_json()['decimal'], '3')
 
-        foo.decimal = 4L
-        self.assertEqual(foo.decimal, decimal.Decimal(4L))
+        foo.decimal = 4
+        self.assertEqual(foo.decimal, decimal.Decimal(4))
         self.assertEqual(foo.to_json()['decimal'], '4')
 
         foo.decimal = 5.25
-        self.assertEqual(foo.decimal, decimal.Decimal(unicode(5.25)))
+        self.assertEqual(foo.decimal, decimal.Decimal(six.text_type(5.25)))
         self.assertEqual(foo.to_json()['decimal'], '5.25')
 
     def test_dict(self):
@@ -674,7 +677,7 @@ class DynamicConversionTestCase(unittest2.TestCase):
     class Foo(JsonObject):
         pass
     string_date = '2012-01-01'
-    date_date = datetime.date(2012, 01, 01)
+    date_date = datetime.date(2012, 0o1, 0o1)
 
     def _test_dynamic_conversion(self, foo):
         string_date = self.string_date
@@ -748,7 +751,7 @@ class User(JsonObject):
     name = StringProperty()
     active = BooleanProperty(default=False, required=True)
     date_joined = DateTimeProperty()
-    tags = ListProperty(unicode)
+    tags = ListProperty(six.text_type)
 
 
 class TestExactDateTime(unittest2.TestCase):

@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 from .base_properties import DefaultProperty
 from .utils import check_type, SimpleDict
+from six.moves import map
+import six
+from six.moves import range
+from six.moves import zip
 
 
 class JsonArray(list):
@@ -38,9 +42,9 @@ class JsonArray(list):
 
     def extend(self, wrapped_list):
         if wrapped_list:
-            wrapped_list, unwrapped_list = zip(
-                *map(self._wrapper.unwrap, wrapped_list)
-            )
+            wrapped_list, unwrapped_list = list(zip(
+                *list(map(self._wrapper.unwrap, wrapped_list))
+            ))
         else:
             unwrapped_list = []
         self._obj.extend(unwrapped_list)
@@ -61,7 +65,7 @@ class JsonArray(list):
         return super(JsonArray, self).pop(index)
 
     def sort(self, cmp=None, key=None, reverse=False):
-        zipped = zip(self, self._obj)
+        zipped = list(zip(self, self._obj))
         if key:
             new_key = lambda pair: key(pair[0])
             zipped.sort(key=new_key, reverse=reverse)
@@ -71,7 +75,7 @@ class JsonArray(list):
         else:
             zipped.sort(reverse=reverse)
 
-        wrapped_list, unwrapped_list = zip(*zipped)
+        wrapped_list, unwrapped_list = list(zip(*zipped))
         while self:
             self.pop()
         super(JsonArray, self).extend(wrapped_list)
@@ -117,11 +121,11 @@ class JsonDict(SimpleDict):
             wrapper or
             DefaultProperty(type_config=self._type_config)
         )
-        for key, value in self._obj.items():
+        for key, value in list(self._obj.items()):
             self[key] = self.__wrap(key, value)
 
     def validate(self, required=True):
-        for obj in self.values():
+        for obj in list(self.values()):
             self._wrapper.validate(obj, required=required)
 
     def __wrap(self, key, unwrapped):
@@ -132,7 +136,7 @@ class JsonDict(SimpleDict):
 
     def __setitem__(self, key, value):
         if isinstance(key, int):
-            key = unicode(key)
+            key = six.text_type(key)
 
         wrapped, unwrapped = self.__unwrap(key, value)
         self._obj[key] = unwrapped
@@ -144,7 +148,7 @@ class JsonDict(SimpleDict):
 
     def __getitem__(self, key):
         if isinstance(key, int):
-            key = unicode(key)
+            key = six.text_type(key)
         return super(JsonDict, self).__getitem__(key)
 
 

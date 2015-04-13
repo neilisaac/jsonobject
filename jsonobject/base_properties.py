@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 import inspect
 from .exceptions import BadValueError
+import six
 
 
 class JsonProperty(object):
@@ -80,7 +81,7 @@ class JsonProperty(object):
         """
         assert self.default() is None
         self.default = method
-        self.name = self.name or method.func_name
+        self.name = self.name or method.__name__
         return self
 
     def exclude(self, value):
@@ -173,7 +174,7 @@ class JsonContainerProperty(JsonProperty):
         elif item_type in map_types_properties:
             return map_types_properties[item_type](type_config=self.type_config)
         else:
-            for key, value in map_types_properties.items():
+            for key, value in list(map_types_properties.items()):
                 if issubclass(item_type, key):
                     return value(type_config=self.type_config)
             raise TypeError('Type {0} not recognized'.format(item_type))
@@ -220,13 +221,13 @@ class DefaultProperty(JsonProperty):
             return map_types_properties[type(value)](
                 type_config=self.type_config)
         else:
-            for value_type, prop_class in map_types_properties.items():
+            for value_type, prop_class in list(map_types_properties.items()):
                 if isinstance(value, value_type):
                     return prop_class(type_config=self.type_config)
             else:
                 raise BadValueError(
                     'value {0!r} not in allowed types: {1!r}'.format(
-                        value, map_types_properties.keys())
+                        value, list(map_types_properties.keys()))
                 )
 
     def value_to_python(self, value):
@@ -241,7 +242,7 @@ class DefaultProperty(JsonProperty):
         Note: containers' items are NOT recursively converted
 
         """
-        if isinstance(value, basestring):
+        if isinstance(value, six.string_types):
             convert = None
             for pattern, _convert in self.type_config.string_conversions:
                 if pattern.match(value):
@@ -290,7 +291,7 @@ class AbstractDateProperty(JsonProperty):
 
     def wrap(self, obj):
         try:
-            if not isinstance(obj, basestring):
+            if not isinstance(obj, six.string_types):
                 raise ValueError()
             return self._wrap(obj)
         except ValueError:

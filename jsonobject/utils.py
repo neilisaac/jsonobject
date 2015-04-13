@@ -19,11 +19,11 @@ class SimpleDict(dict):
     def update(self, E=None, **F):
         for dct in (E, F):
             if dct:
-                for key, value in dct.items():
+                for key, value in list(dct.items()):
                     self[key] = value
 
     def clear(self):
-        for key in self.keys():
+        for key in list(self.keys()):
             del self[key]
 
     def pop(self, key, *args):
@@ -41,7 +41,7 @@ class SimpleDict(dict):
 
     def popitem(self):
         try:
-            arbitrary_key = self.keys()[0]
+            arbitrary_key = list(self.keys())[0]
         except IndexError:
             raise KeyError('popitem(): dictionary is empty')
         val = self[arbitrary_key]

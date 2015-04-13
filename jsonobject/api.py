@@ -4,8 +4,9 @@ from .base import JsonObjectBase, _LimitedDictInterfaceMixin
 import decimal
 import datetime
 
-from . import properties
+from . import properties as _properties
 import re
+import six
 
 
 re_date = re.compile(r'^(\d{4})\D?(0[1-9]|1[0-2])\D?([12]\d|0[1-9]|3[01])$')
@@ -28,20 +29,22 @@ class JsonObject(JsonObjectBase, _LimitedDictInterfaceMixin):
 
     class Meta(object):
         properties = {
-            decimal.Decimal: properties.DecimalProperty,
-            datetime.datetime: properties.DateTimeProperty,
-            datetime.date: properties.DateProperty,
-            datetime.time: properties.TimeProperty,
-            str: properties.StringProperty,
-            unicode: properties.StringProperty,
-            bool: properties.BooleanProperty,
-            int: properties.IntegerProperty,
-            long: properties.IntegerProperty,
-            float: properties.FloatProperty,
-            list: properties.ListProperty,
-            dict: properties.DictProperty,
-            set: properties.SetProperty,
+            decimal.Decimal: _properties.DecimalProperty,
+            datetime.datetime: _properties.DateTimeProperty,
+            datetime.date: _properties.DateProperty,
+            datetime.time: _properties.TimeProperty,
+            str: _properties.StringProperty,
+            six.text_type: _properties.StringProperty,
+            bool: _properties.BooleanProperty,
+            float: _properties.FloatProperty,
+            list: _properties.ListProperty,
+            dict: _properties.DictProperty,
+            set: _properties.SetProperty,
         }
+
+        for integer_type in six.integer_types:
+            properties[integer_type] = _properties.IntegerProperty
+
         string_conversions = (
             (re_date, datetime.date),
             (re_time, datetime.time),
