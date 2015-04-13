@@ -5,7 +5,7 @@ from six.moves import map
 import six
 from six.moves import range
 from six.moves import zip
-
+from functools import cmp_to_key
 
 class JsonArray(list):
     def __init__(self, _obj=None, wrapper=None, type_config=None):
@@ -71,7 +71,7 @@ class JsonArray(list):
             zipped.sort(key=new_key, reverse=reverse)
         elif cmp:
             new_cmp = lambda pair1, pair2: cmp(pair1[0], pair2[0])
-            zipped.sort(cmp=new_cmp, reverse=reverse)
+            zipped.sort(key=cmp_to_key(new_cmp), reverse=reverse)
         else:
             zipped.sort(reverse=reverse)
 
